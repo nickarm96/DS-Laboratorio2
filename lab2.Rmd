@@ -6,6 +6,7 @@
 # install.packages("httr")
 # install.packages("rvest")
 # install.packages("purrr")
+# install.packages("ggplot2")
 
 # load libraries
 library(tidyr)
@@ -15,6 +16,7 @@ library(httr)
 library(rvest)
 library(knitr)
 library(purrr)
+library(ggplot2)
 ```
 ---
 title: "Laboratorio 2"
@@ -27,7 +29,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Pregunta 1.1
+## Pregunta 1
+
+Desarrollo pregunta 1:
+
+### Pregunta 1.1
 
 Descargar la página web <https://www.mediawiki.org/wiki/MediaWiki> y almacenarla en un formato de R apto para ser tratado.
 
@@ -43,7 +49,7 @@ parsedHtml <- htmlParse(content, asText = TRUE)
 content_rvest <- read_html(url_base)
 ```
 
-## Pregunta 1.2
+### Pregunta 1.2
 
 Analizar el contenido de la web, buscando el título de la página (que en HTML se etiqueta como “title”).
 
@@ -57,7 +63,7 @@ print(title)
 titulo <- content_rvest %>% html_element(xpath = xpath_titulo) %>% html_text2()
 ```
 
-## Pregunta 1.3
+### Pregunta 1.3
 
 Analizar el contenido de la web, buscando todos los enlaces (que en HTML se etiquetan como “a”), buscando el texto del enlace, así como la URL.
 
@@ -89,7 +95,7 @@ df <- data.frame(
 kable(df, format = "html")
 ```
 
-## Pregunta 1.4
+### Pregunta 1.4
 
 Generar una tabla con cada enlace encontrado, indicando el texto que acompaña el enlace, y el número de veces que aparece un enlace con ese mismo objetivo.
 
@@ -104,11 +110,11 @@ kable(tabla_suma_repeticiones, format = "html")
 ```
 
 
-## Pregunta 1.5
+### Pregunta 1.5
 
 Para cada enlace, seguirlo e indicar si está activo (podemos usar el código de status HTTP al hacer una petición a esa URL)
 
-```{r data_enlaces, echo = FALSE}
+```{r data_enlaces, echo = FALSE, cache=TRUE}
 
 enlaces_atributos <- content_rvest %>% html_nodes("a") %>%  html_attr("href")
 
@@ -126,9 +132,6 @@ verificar_enlace <- function(enlace) {
     return(status_code(response))
 }
 
-# Verificar tipo URL
-
-
 # Verificar el estado de cada enlace
 estado_enlaces <- map_int(enlaces_atributos, verificar_enlace)
 
@@ -139,12 +142,45 @@ data_enlaces <- data.frame(Enlace = enlaces_atributos, Estado = estado_enlaces)
 kable(data_enlaces, format = "html")
 ```
 
-## Including Plots
+## Pregunta 2
 
-You can also embed plots, for example:
+Desarrollo pregunta 2:
 
-```{r pressure, echo=FALSE, cache=TRUE}
-plot(pressure)
+### 2.1 Histograma  -----------------------------------------------------------------------------------------
+```{r histogram, echo=FALSE, cache=TRUE}
+
+dfEnlacesRelAb <- tabla_suma_repeticiones %>% mutate("Tipo" = if_else(startsWith(Registros, "http"), "Absoluta", "Relativa"))
+dfHistogramaNAbRel <- dfEnlacesRelAb %>% count(Suma_Repeticiones,Tipo)
+
+ggplot(dfHistogramaNAbRel, aes(x=Suma_Repeticiones, y=n, fill = Tipo)) + geom_col()
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+### 2.2 Gráfico de barras  -----------------------------------------------------------------------------------------
+```{r barras, echo=FALSE, cache=TRUE}
+dominio <- "https://www.mediawiki.org/wiki/"
+
+dfEnlacesWiki <- df %>% mutate(Wiki = if_else(startsWith(as.character(enlaces), dominio), "Wiki", "No Wiki"))
+
+dfEnlacesWikiAg <- dfEnlacesWiki %>% count(Wiki)
+ggplot(dfEnlacesWikiAg, aes(x = Wiki, y = n)) + geom_col()
+
+```
+
+
+### 2.3 Gráfico de tarta 
+```{r tarta, echo=FALSE, cache=TRUE}
+
+dfEnlacesPorc <- data_enlaces %>% count(Estado)
+totalEnlaces <- sum(dfEnlacesPorc$n)
+dfEnlacesPorc$porcentaje <- (dfEnlacesPorc$n / totalEnlaces) * 100
+
+dfEnlacesPorc <- transform(dfEnlacesPorc, Estado = as.character(Estado))
+
+ggplot(dfEnlacesPorc, aes(x = "", y = porcentaje, fill = Estado)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0)
+
+
+```
+
