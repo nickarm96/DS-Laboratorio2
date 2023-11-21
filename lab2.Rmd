@@ -36,6 +36,7 @@ Desarrollo pregunta 1:
 ### Pregunta 1.1
 
 Descargar la página web <https://www.mediawiki.org/wiki/MediaWiki> y almacenarla en un formato de R apto para ser tratado.
+A continuacion se muestra el codigo de ejecucion:
 
 ```{r parsedHtml}
 url_base <- "https://www.mediawiki.org/wiki/MediaWiki"
