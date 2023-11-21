@@ -93,6 +93,7 @@ df <- data.frame(
   texto = texto_enlaces,
   stringsAsFactors = F
 )
+# mostrar tabla texto y enlaces
 kable(df, format = "html")
 ```
 
@@ -106,7 +107,7 @@ links_text <- xpathSApply(parsedHtml, "//a", xmlValue)
 contar_links <- table(links_text)
 
 tabla_suma_repeticiones <- data.frame(Registros = names(contar_links), Suma_Repeticiones = as.vector(contar_links))
-
+# mostrar tabla con cantidad de textos por enlace
 kable(tabla_suma_repeticiones, format = "html")
 ```
 
@@ -122,7 +123,7 @@ enlaces_atributos <- content_rvest %>% html_nodes("a") %>%  html_attr("href")
 
 # Función para comprobar si los enlaces están activos
 verificar_enlace <- function(enlace) {
-  #Sys.sleep(1)  # Espera de 1 segundo entre cada solicitud
+  # Sys.sleep(1)  # Espera de 1 segundo entre cada solicitud
   
   # convertir relativas en absolutas (solo empiezan por '/' o '#')
   if(grepl("^(/|#)", enlace, perl = T)) {
@@ -147,12 +148,15 @@ kable(data_enlaces, format = "html")
 
 Desarrollo pregunta 2:
 
-### 2.1 Histograma  -----------------------------------------------------------------------------------------
+### 2.1 Histograma        -----------------------------------------------------------------------------------------
+
+Histograma con la frecuencia de aparición de los enlaces, separado por URLs absolutas y URLs relativas
+
 ```{r histogram, echo=FALSE, cache=TRUE}
 
 dfEnlacesRelAb <- tabla_suma_repeticiones %>% mutate("Tipo" = if_else(startsWith(Registros, "http"), "Absoluta", "Relativa"))
 dfHistogramaNAbRel <- dfEnlacesRelAb %>% count(Suma_Repeticiones,Tipo)
-
+# mostrar grafico histograma
 ggplot(dfHistogramaNAbRel, aes(x=Suma_Repeticiones, y=n, fill = Tipo)) + geom_col()
 
 ```
@@ -160,18 +164,25 @@ ggplot(dfHistogramaNAbRel, aes(x=Suma_Repeticiones, y=n, fill = Tipo)) + geom_co
 
 
 ### 2.2 Gráfico de barras  -----------------------------------------------------------------------------------------
+
+Gráfico de barras con la cantidad de enlaces que apuntan a otros dominios o servicios (distinto a https://www.mediawiki.org
+
 ```{r barras, echo=FALSE, cache=TRUE}
-dominio <- "https://www.mediawiki.org/wiki/"
+dominio <- "https://www.mediawiki.org/"
 
 dfEnlacesWiki <- df %>% mutate(Wiki = if_else(startsWith(as.character(enlaces), dominio), "Wiki", "No Wiki"))
 
 dfEnlacesWikiAg <- dfEnlacesWiki %>% count(Wiki)
+# mostrar grafico de barras
 ggplot(dfEnlacesWikiAg, aes(x = Wiki, y = n)) + geom_col()
 
 ```
 
 
-### 2.3 Gráfico de tarta 
+### 2.3 Gráfico de tarta -----------------------------------------------------------------------------------------
+
+Gráfico de tarta indicando los porcentajes de Status de activos y no activos
+
 ```{r tarta, echo=FALSE, cache=TRUE}
 
 dfEnlacesPorc <- data_enlaces %>% count(Estado)
@@ -180,6 +191,7 @@ dfEnlacesPorc$porcentaje <- (dfEnlacesPorc$n / totalEnlaces) * 100
 
 dfEnlacesPorc <- transform(dfEnlacesPorc, Estado = as.character(Estado))
 
+# mostrar grafico de tarta
 ggplot(dfEnlacesPorc, aes(x = "", y = porcentaje, fill = Estado)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0)
 
 
